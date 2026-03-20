@@ -13,7 +13,7 @@ class HeightLayer(BaseLayer):
         return []  # no dependencies
 
     def frequency(self) -> float:
-        return 0.05
+        return 5
 
     def seed_offset(self) -> int:
         return 0

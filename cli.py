@@ -1,6 +1,6 @@
 # cli.py
 import argparse
-from engine.hex_generator import generate_hex_grid
+from core.grid import HexGrid
 from engine.runner import run_layers
 from renderer.hex_renderer import render_layer
 
@@ -11,21 +11,21 @@ def main():
 
     radius = args.radius
     print(f"Generating hex grid with radius {radius}...")
-    
+
     # Create the grid
-    grid = generate_hex_grid(radius)
-    
+    grid = HexGrid(radius)
+    coords = grid.get_all_coords()
+
     # Generate layers
     print("Running layers...")
-    tiles = run_layers(grid, seed=42)
-    
-    # Render layers
-    print("Rendering Height Layer...")
-    render_layer(tiles, layer_name="height", filename="height.png")
-    print("Rendering Moisture Layer...")
-    render_layer(tiles, layer_name="moisture", filename="moisture.png")
-    
-    print("Done! Check height.png and moisture.png.")
+    layers = run_layers(coords, radius, seed=42)
+
+    for layer_name, layer_values in layers.items():
+        print("Rendering " + layer_name + " layer...")
+        render_layer(layer_values, layer_name, filename=layer_name+'.png')
+
+
+    print("Done!")
 
 if __name__ == "__main__":
     main()

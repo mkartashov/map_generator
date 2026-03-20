@@ -1,18 +1,16 @@
 # renderer/hex_renderer.py
 from typing import Dict
 from PIL import Image, ImageDraw
-from core.grid import Tile
-from core.types import Coord
 
-HEX_SIZE = 20  # pixels per hex, adjust as needed
-SEA_LEVEL_ENABLED = True  # hardcoded sea-level cutoff for height layer
-SEA_LEVEL_FACTOR = 0.2   # 20% of max_layer_value
+HEX_SIZE = 20  # pixels per hex
+SEA_LEVEL_ENABLED = True
+SEA_LEVEL_FACTOR = 0.3
 
 def coord_to_pixel(q: int, r: int, size: int = HEX_SIZE) -> tuple[int, int]:
     """Convert axial (q,r) to pixel coordinates for flat-top hexes."""
     x = size * 3/2 * q
-    y = size * (3**0.5 / 2 * q + (3**0.5) * r)
-    return int(x), int(y)
+    y = size * (3**0.5) * (r + q / 2)  # stagger for flat-top
+    return x, y
 
 def draw_hex(draw: ImageDraw.Draw, x: int, y: int, size: int, color: tuple[int,int,int]):
     """Draw a flat-top hex centered at (x,y)."""
@@ -26,48 +24,56 @@ def draw_hex(draw: ImageDraw.Draw, x: int, y: int, size: int, color: tuple[int,i
         points.append((px, py))
     draw.polygon(points, fill=color, outline=(0,0,0))
 
-def render_layer(tiles: Dict[Coord, Tile], layer_name: str, filename: str):
+def render_layer(layer_values: Dict[tuple[int,int], float], layer_name: str, filename: str):
     """Render a layer to a PNG image with normalization and optional sea level."""
-    # Extract layer values
-    values = [tile.layers[layer_name] for tile in tiles.values()]
+
+    # Extract values
+    values = list(layer_values.values())
     min_val = min(values)
     max_val = max(values)
 
-    # Special handling for height layer sea-level cutoff
+    # Sea-level for height layer
     if layer_name == "height" and SEA_LEVEL_ENABLED:
-        max_layer_val = max(values)
-        sea_level = SEA_LEVEL_FACTOR * max_layer_val
+        sea_level = SEA_LEVEL_FACTOR * max_val
     else:
         sea_level = None
 
-    # Determine image size
-    coords = tiles.keys()
-    min_q = min(q for q, r in coords)
-    max_q = max(q for q, r in coords)
-    min_r = min(r for q, r in coords)
-    max_r = max(r for q, r in coords)
+    # Precompute all pixel positions
+    pixel_coords = {}
+    for (q, r) in layer_values.keys():
+        x, y = coord_to_pixel(q, r)
+        pixel_coords[(q,r)] = (x, y)
 
-    img_width = int(HEX_SIZE * 3/2 * (max_q - min_q + 3))
-    img_height = int(HEX_SIZE * (3**0.5) * (max_r - min_r + 3))
+    # Determine image bounds
+    xs = [x for x, y in pixel_coords.values()]
+    ys = [y for x, y in pixel_coords.values()]
+    min_x, max_x = min(xs), max(xs)
+    min_y, max_y = min(ys), max(ys)
+
+    padding = HEX_SIZE  # optional padding around edges
+    img_width = int(max_x - min_x + 2 * padding)
+    img_height = int(max_y - min_y + 2 * padding)
+
+    # Create image
     image = Image.new("RGB", (img_width, img_height), (255,255,255))
     draw = ImageDraw.Draw(image)
 
-    # Draw each hex
-    for coord, tile in tiles.items():
-        q, r = coord
-        x, y = coord_to_pixel(q - min_q, r - min_r)
+    # Draw hexes
+    for coord, value in layer_values.items():
+        x, y = pixel_coords[coord]
 
-        val = tile.layers[layer_name]
+        # Shift so min_x/min_y is at padding
+        x_shifted = x - min_x + padding
+        y_shifted = y - min_y + padding
 
-        # Apply sea-level cutoff if enabled
-        if sea_level is not None and val < sea_level:
+        # Sea-level coloring
+        if sea_level is not None and value < sea_level:
             gray = 0
         else:
-            # normalize to 0..255
-            normalized = (val - min_val) / max(max_val - min_val, 1e-6)
+            normalized = (value - min_val) / max(max_val - min_val, 1e-6)
             gray = int(normalized * 255)
         color = (gray, gray, gray)
 
-        draw_hex(draw, x, y, HEX_SIZE, color)
+        draw_hex(draw, x_shifted, y_shifted, HEX_SIZE, color)
 
     image.save(filename)

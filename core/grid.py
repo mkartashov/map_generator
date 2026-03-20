@@ -37,3 +37,6 @@ class HexGrid:
         dr = a.r - b.r
         ds = -a.q - a.r + b.q + b.r
         return (abs(dq) + abs(dr) + abs(ds)) // 2
+
+    def get_all_coords(self):
+        return list(self.tiles.keys())

@@ -15,24 +15,23 @@ def get_layer_sequence() -> List[LayerClass]:
     return [HeightLayer(), MoistureLayer()]
 
 
-def run_layers(grid: HexGrid, seed: int = 42) -> Dict[Coord, Tile]:
+def run_layers(coords: list[Coord], radius, seed: int = 42) -> Dict[Coord, Tile]:
     """
     Generate all layers for the grid, respecting dependencies,
     and populate tiles with layer values.
     """
-    tiles = grid.tiles  # Dict[Coord, Tile]
-    coords = list(tiles.keys())
+
 
     # Store results of each layer for dependency injection
     prev_layers: Dict[str, Dict[Coord, float]] = {}
 
     for layer in get_layer_sequence():
         # Generate layer using decoupled, functional pattern
-        layer_values = layer.generate(coords, seed, grid.radius, prev_layers)
+        layer_values = layer.generate(coords, seed, radius, prev_layers)
         prev_layers[layer.name()] = layer_values
 
-        # Apply layer values to tiles
-        for coord, value in layer_values.items():
-            tiles[coord].layers[layer.name()] = value
+        # # Apply layer values to tiles
+        # for coord, value in layer_values.items():
+        #     tiles[coord].layers[layer.name()] = value
 
-    return tiles
+    return prev_layers
