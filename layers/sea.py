@@ -3,6 +3,9 @@ from core.base_layer import BaseLayer
 from core.types import CoordType, LayerMapBoolType
 
 
+SEA_LEVEL = 200.0
+
+
 class SeaLayer(BaseLayer):
     """
     Marks ocean hexes based on height map and sea level.
@@ -20,7 +23,7 @@ class SeaLayer(BaseLayer):
         raise NotImplementedError()
 
     def max_layer_value(self) -> float:
-        return 100.0  # meters
+        raise NotImplementedError()
 
     def _generate(
         self,
@@ -28,15 +31,15 @@ class SeaLayer(BaseLayer):
         seed: int,
         radius: float,
         layers: list[BaseLayer]
-    ) -> LayerMapBoolType:
+    ) -> None:
         """
         Generate sea map: True for ocean hexes, False for land.
         """
-        height = next(layer for layer in layers if layer.name() == "height").get_result()
-        sea_level = self.max_layer_value()
-        result: LayerMapBoolType = {}
+        height_layer = next(layer for layer in layers if layer.name() == "height") #.get_result()
+        # sea_level = self.max_layer_value()
+        # result: LayerMapBoolType = {}
 
         for coord in coords:
-            result[coord] = height[coord] <= sea_level
+            self._set_value_at(coord, height_layer.get_value_at(coord) <= SEA_LEVEL)
 
-        return result
+        # return result

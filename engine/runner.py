@@ -4,6 +4,7 @@ from core.base_layer import BaseLayer
 from layers.height import HeightLayer
 from layers.moisture import MoistureLayer
 from layers.sea import SeaLayer
+from layers.rivers import RiversLayer
 
 
 def get_layer_sequence() -> list[BaseLayer]:
@@ -11,7 +12,7 @@ def get_layer_sequence() -> list[BaseLayer]:
     Hardcoded topological order for now.
     Later replace with actual topo sort based on depends_on().
     """
-    return [HeightLayer(), MoistureLayer(), SeaLayer()]
+    return [HeightLayer(), MoistureLayer(), SeaLayer(), RiversLayer()]
 
 
 def run_layers(coords: list[CoordType], radius: float, seed: int) -> dict[str, LayerMapType]:

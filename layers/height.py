@@ -18,7 +18,7 @@ class HeightLayer(BaseLayer):
         return 0
 
     def max_layer_value(self) -> float:
-        return 600.0  # meters
+        return 1000.0  # meters
 
     def _generate(
         self,
@@ -26,14 +26,14 @@ class HeightLayer(BaseLayer):
         seed: int,
         radius: float,
         layers: list[BaseLayer]
-    ) -> LayerMapFloatType:
+    ) -> None:
         """
         Internal pure function to generate height values.
         Returns a dict mapping (q,r) coordinates to normalized height 0..1.
         """
         simplex = OpenSimplex(seed + self.seed_offset())
         freq = self.frequency() / radius  # scale the frequency for proportionality
-        result: LayerMapFloatType = {}
+        # result: LayerMapFloatType = {}
 
         for q, r in coords:
             # Perlin/simplex noise
@@ -45,6 +45,8 @@ class HeightLayer(BaseLayer):
             falloff = max(0, 1 - (distance / radius))
             normalised_height = n * falloff
 
-            result[(q, r)] = normalised_height * self.max_layer_value()
+            self._set_value_at((q, r), normalised_height * self.max_layer_value())
 
-        return result
+            # result[(q, r)] = normalised_height * self.max_layer_value()
+
+        # return result

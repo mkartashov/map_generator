@@ -26,7 +26,7 @@ class MoistureLayer(BaseLayer):
         seed: int,
         radius: float,
         layers: list[BaseLayer]
-    ) -> LayerMapFloatType:
+    ) -> None:
         """
         Generate moisture values for each coordinate.
         Moisture is influenced by height: higher terrain tends to be drier.
@@ -37,7 +37,7 @@ class MoistureLayer(BaseLayer):
 
         simplex = OpenSimplex(seed + self.seed_offset())
         freq = self.frequency() / radius
-        result: LayerMapFloatType = {}
+        # result: LayerMapFloatType = {}
 
         for coord in coords:
             # Height contribution normalized [0,1]
@@ -51,7 +51,8 @@ class MoistureLayer(BaseLayer):
 
             # Clamp to [0,1]
             moisture = min(max(moisture, 0.0), 1.0)
+            self._set_value_at(coord, moisture)
 
-            result[coord] = moisture
+            # result[coord] = moisture
 
-        return result
+        # return result
