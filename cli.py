@@ -1,6 +1,6 @@
 # cli.py
 import argparse
-from core.grid import HexGrid
+from core.grid import generate_all_coordinates
 from engine.runner import run_layers
 from renderer.hex_renderer import render_layer
 
@@ -12,9 +12,7 @@ def main():
     radius = args.radius
     print(f"Generating hex grid with radius {radius}...")
 
-    # Create the grid
-    grid = HexGrid(radius)
-    coords = grid.get_all_coords()
+    coords = generate_all_coordinates(radius)
 
     # Generate layers
     print("Running layers...")

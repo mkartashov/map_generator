@@ -42,4 +42,3 @@ class BaseLayer:
         prev_layers: dict[str, LayerFloatValues]
     ) -> LayerFloatValues:
         raise NotImplementedError()
-

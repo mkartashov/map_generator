@@ -4,6 +4,7 @@ from core.base_layer import BaseLayer
 from core.types import Coord
 from opensimplex import OpenSimplex
 
+
 class MoistureLayer(BaseLayer):
     def name(self) -> str:
         return "moisture"
@@ -12,13 +13,13 @@ class MoistureLayer(BaseLayer):
         return ["height"]  # Moisture depends on HeightLayer
 
     def frequency(self) -> float:
-        return 0.08  # slightly higher frequency than height
+        return 4  # slightly higher frequency than height
 
     def seed_offset(self) -> int:
         return 1234  # different offset to produce independent noise
 
     def max_layer_value(self) -> float:
-        return 1.0  # normalized 0..1 for moisture
+        return 100  # normalized 0..1 for moisture
 
     def _generate(
         self,
@@ -32,26 +33,25 @@ class MoistureLayer(BaseLayer):
         Moisture is influenced by height: higher terrain tends to be drier.
         Returns a dict mapping (q,r) coordinates to float 0..1.
         """
-        # Assert dependent layers are present (wrapper in BaseLayer handles this)
         height_layer = prev_layers["height"]
 
         simplex = OpenSimplex(seed + self.seed_offset())
         freq = self.frequency() / radius
         result: Dict[Coord, float] = {}
 
-        for q, r in coords:
-            n = simplex.noise2(q * freq, r * freq)
-            n = (n + 1) / 2  # normalize 0..1
+        for coord in coords:
+            # Height contribution normalized [0,1]
+            h = height_layer[coord] / max(height_layer.values())
 
-            # radial falloff for island edges
-            distance = (abs(q) + abs(r) + abs(-q-r)) / 2
-            falloff = max(0, 1 - (distance / radius))
+            # Noise contribution in [0,1]
+            n = (simplex.noise2(coord[0] * freq, coord[1] * freq) + 1) / 2.0
 
-            # combine noise with height influence
-            height = height_layer[(q, r)] / 600.0  # normalize height 0..1 using HeightLayer max value
-            height_factor = max(0, 1 - height)     # higher = drier
+            # Weighted blend: 70% noise, 30% height
+            moisture = 0.7 * n + 0.3 * h
 
-            moisture = (n * 0.7 + height_factor * 0.3) * falloff
-            result[(q, r)] = min(max(moisture, 0.0), 1.0)  # clamp 0..1
+            # Clamp to [0,1]
+            moisture = min(max(moisture, 0.0), 1.0)
+
+            result[coord] = moisture
 
         return result

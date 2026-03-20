@@ -1,18 +1,21 @@
 # renderer/hex_renderer.py
-from typing import Dict
 from PIL import Image, ImageDraw
+
+from core.types import LayerFloatValues
 
 HEX_SIZE = 20  # pixels per hex
 SEA_LEVEL_ENABLED = True
 SEA_LEVEL_FACTOR = 0.3
 
-def coord_to_pixel(q: int, r: int, size: int = HEX_SIZE) -> tuple[int, int]:
+
+def coord_to_pixel(q: int, r: int, size: int = HEX_SIZE) -> tuple[float, float]:
     """Convert axial (q,r) to pixel coordinates for flat-top hexes."""
     x = size * 3/2 * q
     y = size * (3**0.5) * (r + q / 2)  # stagger for flat-top
     return x, y
 
-def draw_hex(draw: ImageDraw.Draw, x: int, y: int, size: int, color: tuple[int,int,int]):
+
+def draw_hex(draw: ImageDraw.ImageDraw, x: float, y: float, size: int, color: tuple[int, int, int]) -> None:
     """Draw a flat-top hex centered at (x,y)."""
     import math
     points = []
@@ -22,9 +25,10 @@ def draw_hex(draw: ImageDraw.Draw, x: int, y: int, size: int, color: tuple[int,i
         px = x + size * math.cos(angle_rad)
         py = y + size * math.sin(angle_rad)
         points.append((px, py))
-    draw.polygon(points, fill=color, outline=(0,0,0))
+    draw.polygon(points, fill=color, outline=(0, 0, 0))
 
-def render_layer(layer_values: Dict[tuple[int,int], float], layer_name: str, filename: str):
+
+def render_layer(layer_values: LayerFloatValues, layer_name: str, filename: str) -> None:
     """Render a layer to a PNG image with normalization and optional sea level."""
 
     # Extract values
@@ -42,7 +46,7 @@ def render_layer(layer_values: Dict[tuple[int,int], float], layer_name: str, fil
     pixel_coords = {}
     for (q, r) in layer_values.keys():
         x, y = coord_to_pixel(q, r)
-        pixel_coords[(q,r)] = (x, y)
+        pixel_coords[(q, r)] = (x, y)
 
     # Determine image bounds
     xs = [x for x, y in pixel_coords.values()]
@@ -55,7 +59,7 @@ def render_layer(layer_values: Dict[tuple[int,int], float], layer_name: str, fil
     img_height = int(max_y - min_y + 2 * padding)
 
     # Create image
-    image = Image.new("RGB", (img_width, img_height), (255,255,255))
+    image = Image.new("RGB", (img_width, img_height), (255, 255, 255))
     draw = ImageDraw.Draw(image)
 
     # Draw hexes

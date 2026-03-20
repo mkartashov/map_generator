@@ -1,7 +1,6 @@
 # layers/height.py
-from typing import Dict, Tuple
 from core.base_layer import BaseLayer
-from core.types import Coord
+from core.types import Coord, LayerFloatValues
 from opensimplex import OpenSimplex
 
 
@@ -26,15 +25,15 @@ class HeightLayer(BaseLayer):
         coords: list[Coord],
         seed: int,
         radius: float,
-        prev_layers: Dict[str, Dict[Coord, float]]
-    ) -> Dict[Coord, float]:
+        prev_layers: dict[str, LayerFloatValues]
+    ) -> LayerFloatValues:
         """
         Internal pure function to generate height values.
         Returns a dict mapping (q,r) coordinates to normalized height 0..1.
         """
         simplex = OpenSimplex(seed + self.seed_offset())
         freq = self.frequency() / radius  # scale the frequency for proportionality
-        result: Dict[Coord, float] = {}
+        result: dict[Coord, float] = {}
 
         for q, r in coords:
             # Perlin/simplex noise
