@@ -7,11 +7,11 @@ def test_moisture_layer_deterministic():
     
     # generate height layer first (needed by moisture)
     height_layer = HeightLayer()
-    height_values = height_layer._generate(coords, seed=seed, radius=5, prev_layers={})
+    height_values = height_layer.generate(coords, seed=seed, radius=5, layers=[])
     
     moisture_layer = MoistureLayer()
-    out1 = moisture_layer._generate(coords, seed=seed, radius=5, prev_layers={'height': height_values})
-    out2 = moisture_layer._generate(coords, seed=seed, radius=5, prev_layers={'height': height_values})
+    out1 = moisture_layer._generate(coords, seed=seed, radius=5, layers=[height_layer])
+    out2 = moisture_layer._generate(coords, seed=seed, radius=5, layers=[height_layer])
     
     assert out1 == out2
     

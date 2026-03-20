@@ -16,4 +16,4 @@ def test_run_layers_deterministic():
 
     for layer_name, layer_values in result1.items():
         for coord, value in result2[layer_name].items():
-            assert abs(layer_values[coord] - value) < 1e-6
+            assert abs(float(layer_values[coord]) - float(value)) < 1e-6

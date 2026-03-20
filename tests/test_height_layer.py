@@ -6,8 +6,8 @@ def test_height_layer_deterministic():
     
     # Use a fixed seed
     seed = 42
-    out1 = layer._generate(coords, seed=seed, radius=5, prev_layers={})
-    out2 = layer._generate(coords, seed=seed, radius=5, prev_layers={})
+    out1 = layer._generate(coords, seed=seed, radius=5, layers=[])
+    out2 = layer._generate(coords, seed=seed, radius=5, layers=[])
     
     # deterministic: outputs must match exactly
     assert out1 == out2
