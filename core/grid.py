@@ -1,7 +1,7 @@
-from .types import Coord
+from .types import CoordType
 
 
-def generate_all_coordinates(radius: int) -> list[Coord]:
+def generate_all_coordinates(radius: int) -> list[CoordType]:
     result = []
     for q in range(-radius, radius + 1):
         r1 = max(-radius, -q - radius)

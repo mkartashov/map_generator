@@ -1,7 +1,7 @@
 # renderer/hex_renderer.py
 from PIL import Image, ImageDraw
 
-from core.types import LayerFloatValues
+from core.types import LayerMapType
 
 HEX_SIZE = 20  # pixels per hex
 SEA_LEVEL_ENABLED = True
@@ -28,19 +28,13 @@ def draw_hex(draw: ImageDraw.ImageDraw, x: float, y: float, size: int, color: tu
     draw.polygon(points, fill=color, outline=(0, 0, 0))
 
 
-def render_layer(layer_values: LayerFloatValues, layer_name: str, filename: str) -> None:
+def render_layer(layer_values: LayerMapType, layer_name: str, filename: str) -> None:
     """Render a layer to a PNG image with normalization and optional sea level."""
 
     # Extract values
     values = list(layer_values.values())
-    min_val = min(values)
-    max_val = max(values)
-
-    # Sea-level for height layer
-    if layer_name == "height" and SEA_LEVEL_ENABLED:
-        sea_level = SEA_LEVEL_FACTOR * max_val
-    else:
-        sea_level = None
+    min_val = float(min(values))
+    max_val = float(max(values))
 
     # Precompute all pixel positions
     pixel_coords = {}
@@ -64,18 +58,15 @@ def render_layer(layer_values: LayerFloatValues, layer_name: str, filename: str)
 
     # Draw hexes
     for coord, value in layer_values.items():
+        value = float(value)
         x, y = pixel_coords[coord]
 
         # Shift so min_x/min_y is at padding
         x_shifted = x - min_x + padding
         y_shifted = y - min_y + padding
 
-        # Sea-level coloring
-        if sea_level is not None and value < sea_level:
-            gray = 0
-        else:
-            normalized = (value - min_val) / max(max_val - min_val, 1e-6)
-            gray = int(normalized * 255)
+        normalized = (value - min_val) / max(max_val - min_val, 1e-6)
+        gray = int(normalized * 255)
         color = (gray, gray, gray)
 
         draw_hex(draw, x_shifted, y_shifted, HEX_SIZE, color)

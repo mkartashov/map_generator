@@ -1,6 +1,6 @@
 # layers/height.py
 from core.base_layer import BaseLayer
-from core.types import Coord, LayerFloatValues
+from core.types import CoordType, LayerMapFloatType
 from opensimplex import OpenSimplex
 
 
@@ -9,7 +9,7 @@ class HeightLayer(BaseLayer):
         return "height"
 
     def depends_on(self) -> list[str]:
-        return []  # no dependencies
+        return []
 
     def frequency(self) -> float:
         return 5
@@ -22,18 +22,18 @@ class HeightLayer(BaseLayer):
 
     def _generate(
         self,
-        coords: list[Coord],
+        coords: list[CoordType],
         seed: int,
         radius: float,
-        prev_layers: dict[str, LayerFloatValues]
-    ) -> LayerFloatValues:
+        layers: list[BaseLayer]
+    ) -> LayerMapFloatType:
         """
         Internal pure function to generate height values.
         Returns a dict mapping (q,r) coordinates to normalized height 0..1.
         """
         simplex = OpenSimplex(seed + self.seed_offset())
         freq = self.frequency() / radius  # scale the frequency for proportionality
-        result: dict[Coord, float] = {}
+        result: LayerMapFloatType = {}
 
         for q, r in coords:
             # Perlin/simplex noise
