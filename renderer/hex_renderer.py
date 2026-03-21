@@ -1,7 +1,8 @@
 # renderer/hex_renderer.py
+import math
 from PIL import Image, ImageDraw
 
-from core.types import LayerMapType
+from core.base_layer import AnyBaseLayerType
 
 HEX_SIZE = 20  # pixels per hex
 SEA_LEVEL_ENABLED = True
@@ -17,7 +18,6 @@ def coord_to_pixel(q: int, r: int, size: int = HEX_SIZE) -> tuple[float, float]:
 
 def draw_hex(draw: ImageDraw.ImageDraw, x: float, y: float, size: int, color: tuple[int, int, int]) -> None:
     """Draw a flat-top hex centered at (x,y)."""
-    import math
     points = []
     for i in range(6):
         angle_deg = 60 * i
@@ -28,17 +28,17 @@ def draw_hex(draw: ImageDraw.ImageDraw, x: float, y: float, size: int, color: tu
     draw.polygon(points, fill=color, outline=(0, 0, 0))
 
 
-def render_layer(layer_values: LayerMapType, layer_name: str, filename: str) -> None:
+def render_layer(layer: AnyBaseLayerType) -> None:
     """Render a layer to a PNG image with normalization and optional sea level."""
 
+    filename = layer.name() + '.png'
+
     # Extract values
-    values = list(layer_values.values())
-    min_val = float(min(values))
-    max_val = float(max(values))
+    min_val, max_val = [float(x) for x in layer.get_range()]
 
     # Precompute all pixel positions
     pixel_coords = {}
-    for (q, r) in layer_values.keys():
+    for (q, r) in layer.get_all_coords():
         x, y = coord_to_pixel(q, r)
         pixel_coords[(q, r)] = (x, y)
 
@@ -57,8 +57,8 @@ def render_layer(layer_values: LayerMapType, layer_name: str, filename: str) -> 
     draw = ImageDraw.Draw(image)
 
     # Draw hexes
-    for coord, value in layer_values.items():
-        value = float(value)
+    for coord in layer.get_all_coords():
+        value = float(layer.get_value_at(coord))
         x, y = pixel_coords[coord]
 
         # Shift so min_x/min_y is at padding

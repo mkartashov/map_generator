@@ -1,28 +1,31 @@
-from .types import CoordType, LayerMapType
+from __future__ import annotations
+from .types import CoordType
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar
+from typing import Generic, TypeVar, Any, TypeAlias
 
 
-T = TypeVar("T")  # Generic type placeholder
+T = TypeVar("T", float, bool)
 
 
 class BaseLayer(ABC, Generic[T]):
 
     def __init__(self) -> None:
-        self.__result: dict[coordType, T] = {}
+        self.__result: dict[CoordType, T] = {}
         self.ready = False
+
+    def get_range(self) -> tuple[T, T]:
+        if not self.ready:
+            raise RuntimeError("This layer is not ready: " + self.__class__.__name__)
+        all_values = self.__result.values()
+        return min(all_values), max(all_values)
 
     def get_all_coords(self) -> list[CoordType]:
         if not self.ready:
             raise RuntimeError("This layer is not ready: " + self.__class__.__name__)
+        return list(self.__result.keys())
 
     def get_value_at(self, coord: CoordType) -> T:
         return self.__result[coord]
-
-    def get_result(self) -> LayerMapType:
-        if not self.ready:
-            raise RuntimeError("This layer is not ready: " + self.__class__.__name__)
-        return self.__result
 
     def get_neighbours_of(self, coord: CoordType) -> list[CoordType]:
         # flat-top directions
@@ -69,7 +72,7 @@ class BaseLayer(ABC, Generic[T]):
         coords: list[CoordType],
         seed: int,
         radius: float,
-        layers: list["BaseLayer"]
+        layers: list[BaseLayer[Any]]
     ) -> None:
         self._generate(coords, seed, radius, layers)
         self.ready = True
@@ -87,6 +90,9 @@ class BaseLayer(ABC, Generic[T]):
         coords: list[CoordType],
         seed: int,
         radius: float,
-        layers: list["BaseLayer"]
-    ) -> LayerMapType:
+        layers: list[BaseLayer[Any]]
+    ) -> None:
         raise NotImplementedError()
+
+
+AnyBaseLayerType: TypeAlias = BaseLayer[Any]

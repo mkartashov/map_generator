@@ -1,8 +1,8 @@
 # layers/moisture.py
 import random
-from core.base_layer import BaseLayer
-from core.types import CoordType, LayerMapFloatType
-from opensimplex import OpenSimplex
+import math
+from core.base_layer import BaseLayer, AnyBaseLayerType
+from core.types import CoordType
 
 
 RELATIVE_HEIGHT = 0.5
@@ -11,7 +11,8 @@ MOISTURE_WEIGHT = 0.3
 MEANDERING_PROBABILITY = 0.1
 FLOWING_UPHILL_PROBABILITY = 0.5
 
-class RiversLayer(BaseLayer):
+
+class RiversLayer(BaseLayer[bool]):
     def name(self) -> str:
         return "rivers"
 
@@ -29,11 +30,11 @@ class RiversLayer(BaseLayer):
         raise NotImplementedError()
 
     def _select_river_source_candidates(
-        self, 
+        self,
         coords: list[CoordType],
-        height_layer: BaseLayer,
-        sea_layer: BaseLayer, 
-        moisture_layer: BaseLayer,
+        height_layer: AnyBaseLayerType,
+        sea_layer: AnyBaseLayerType,
+        moisture_layer: AnyBaseLayerType,
     ) -> dict[CoordType, float]:
         max_height = height_layer.max_layer_value()
         max_moisture = moisture_layer.max_layer_value()
@@ -45,39 +46,31 @@ class RiversLayer(BaseLayer):
 
             if relative_height >= RELATIVE_HEIGHT and not is_sea:
                 score = (
-                    HEIGHT_WEIGHT * relative_height + 
+                    HEIGHT_WEIGHT * relative_height +
                     MOISTURE_WEIGHT * moisture_layer.get_value_at(coord) / max_moisture
                 )
                 candidates[coord] = score
 
         return candidates
 
-
-    def _find_path(height_layer, current_path, previous_height, current_coord, uphill_count):
-        curr_height = height_layer.get_value_at(current_coord)
-        if curr_height > previous_height and uphill_count == 3:
-            return None
-
-
-
     def _generate(
         self,
         coords: list[CoordType],
         seed: int,
         radius: float,
-        layers: list[BaseLayer]
-    ) -> LayerMapFloatType:
+        layers: list[AnyBaseLayerType]
+    ) -> None:
         """
         """
-        random.seed(seed + self.seed_offset()) 
+        random.seed(seed + self.seed_offset())
 
         height_layer = next(layer for layer in layers if layer.name() == "height")
         moisture_layer = next(layer for layer in layers if layer.name() == "moisture")
         sea_layer = next(layer for layer in layers if layer.name() == "sea")
 
         source_candidates = self._select_river_source_candidates(
-            coords, 
-            height_layer=height_layer, 
+            coords,
+            height_layer=height_layer,
             sea_layer=sea_layer,
             moisture_layer=moisture_layer,
         )
@@ -89,9 +82,7 @@ class RiversLayer(BaseLayer):
 
         rivers = set()
 
-        import math
-
-        def find_path(source):
+        def find_path(source: CoordType) -> set[CoordType] | None:
             path_list = [source]
             path_set = {source}
 
@@ -112,12 +103,10 @@ class RiversLayer(BaseLayer):
                 if not neighbours:
                     return None
 
-                # ✅ reach sea
                 for n in neighbours:
                     if sea_layer.get_value_at(n):
                         return path_set | {n}
 
-                # ✅ merge into existing river
                 for n in neighbours:
                     if n in rivers:
                         return path_set | {n}
@@ -126,14 +115,13 @@ class RiversLayer(BaseLayer):
                 unvisited = [n for n in neighbours if n not in path_set]
                 candidates = unvisited if unvisited else neighbours
 
-                # 🚫 avoid immediate backtracking
                 if previous is not None:
                     candidates = [n for n in candidates if n != previous]
 
                 if not candidates:
                     return None
 
-                weights = []
+                weights: list[float] = []
 
                 for n in candidates:
                     h = height_layer.get_value_at(n)
@@ -151,7 +139,7 @@ class RiversLayer(BaseLayer):
                     if abs(delta_h) < 0.01:
                         w *= 0.3
 
-                    # 🔥 MOMENTUM (directional bias)
+                    # MOMENTUM (directional bias)
                     if previous is not None:
                         dx1 = current[0] - previous[0]
                         dy1 = current[1] - previous[1]
@@ -178,9 +166,9 @@ class RiversLayer(BaseLayer):
                 if total == 0:
                     return None
 
-                # 🎲 weighted random choice
+                # weighted random choice
                 r = random.uniform(0, total)
-                acc = 0
+                acc = 0.0
 
                 for n, w in zip(candidates, weights):
                     acc += w
@@ -202,75 +190,14 @@ class RiversLayer(BaseLayer):
 
             return None
 
-
-
         for source in sources:
             path = find_path(source)
-            print('='*50)
-            print(path)
-            if path:
-                rivers.update(path)
+            if path is None:
+                break
 
-            
-
+            rivers.update(path)
 
         for coord in coords:
             self._set_value_at(coord, False)
         for river_tile in rivers:
             self._set_value_at(river_tile, True)
-
-        # sources: list[CoordType] = []
-        # for coord, score in source_candidates.items():
-        #     if random.random() < score * self.frequency():
-        #         sources.append(coord)
-
-        # print("SOURCES")
-        # print(sources)
-
-        # rivers = set()
-
-        # for source in sources:
-        #     current = source
-        #     path = [current]
-
-        #     current_height = height_layer.get_value_at(current)
-        #     neighbours = self.get_neighbours_of(current)
-            
-        #     # skip tiles already in path to prevent loops
-        #     neighbours = [n for n in neighbours if n not in path]
-        #     neighbours.sort(key=lambda n: height_layer.get_value_at(n))
-
-        #     if not neighbours:
-        #         rivers.update(path)
-        #         break
-
-        #     # sort neighbors by height
-            
-        #     # try downhill first
-        #     lower_neighbours = [n for n in neighbours if height_layer.get_value_at(n) < current_height]
-            
-        #     if not lower_neighbours:
-        #         # allow flat or small uphill flow if blocked
-        #         lower_neighbours = [n for n in neighbours if height_layer.get_value_at(n) <= current_height + 1]
-
-        #     if not lower_neighbours:
-        #         # completely stuck
-        #         rivers.update(path)
-        #         break
-
-        #     # pick next tile
-        #     choice = lower_neighbours[0]
-        #     if len(lower_neighbours) > 1 and random.random() < MEANDERING_PROBABILITY:
-        #         choice = lower_neighbours[1]
-
-        #     # stop if reached sea
-        #     if sea_layer.get_value_at(choice):
-        #         path.append(choice)
-        #         rivers.update(path)
-        #         break
-
-        #     path.append(choice)
-        #     current = choice
-
-        # reset layer and mark rivers
-

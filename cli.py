@@ -37,9 +37,9 @@ def main():
     print("Running layers...")
     layers = run_layers(coords, radius, seed=seed)
 
-    for layer_name, layer_values in layers.items():
-        print(f"Rendering {layer_name} layer...")
-        render_layer(layer_values, layer_name, filename=f"{layer_name}.png")
+    for layer in layers:
+        print(f"Rendering {layer.name()} layer...")
+        render_layer(layer)
 
     print("Done!")
 

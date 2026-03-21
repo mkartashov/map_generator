@@ -1,18 +1,17 @@
 from layers.height import HeightLayer
 
 def test_height_layer_deterministic():
-    layer = HeightLayer()
+    layer1 = HeightLayer()
+    layer2 = HeightLayer()
     coords = [(0, 0), (1, 1), (2, -1)]
     
     # Use a fixed seed
     seed = 42
-    out1 = layer._generate(coords, seed=seed, radius=5, layers=[])
-    out2 = layer._generate(coords, seed=seed, radius=5, layers=[])
-    
-    # deterministic: outputs must match exactly
-    assert out1 == out2
-    
-    expected_values = {coord: out1[coord] for coord in coords}
+    layer1.generate(coords, seed=seed, radius=5, layers=[])
+    layer2.generate(coords, seed=seed, radius=5, layers=[])
 
-    for coord, expected in expected_values.items():
-        assert abs(out2[coord] - expected) < 1e-6
+    for coord in coords:
+        assert layer1.get_value_at(coord) == layer2.get_value_at(coord)
+
+    assert all(c1 in layer2.get_all_coords() for c1 in layer1.get_all_coords())
+    assert all(c2 in layer1.get_all_coords() for c2 in layer2.get_all_coords())
