@@ -1,17 +1,48 @@
-from .types import CoordType, LayerMapType
+from __future__ import annotations
+from .types import CoordType
 from abc import ABC, abstractmethod
+from typing import Generic, TypeVar, Any, TypeAlias
 
 
-class BaseLayer(ABC):
+T = TypeVar("T", float, bool)
+
+
+class BaseLayer(ABC, Generic[T]):
 
     def __init__(self) -> None:
-        self.__result: LayerMapType | None = None
+        self.__result: dict[CoordType, T] = {}
         self.ready = False
 
-    def get_result(self) -> LayerMapType:
-        if self.__result is None:
+    def get_range(self) -> tuple[T, T]:
+        if not self.ready:
             raise RuntimeError("This layer is not ready: " + self.__class__.__name__)
-        return self.__result
+        all_values = self.__result.values()
+        return min(all_values), max(all_values)
+
+    def get_all_coords(self) -> list[CoordType]:
+        if not self.ready:
+            raise RuntimeError("This layer is not ready: " + self.__class__.__name__)
+        return list(self.__result.keys())
+
+    def get_value_at(self, coord: CoordType) -> T:
+        return self.__result[coord]
+
+    def get_neighbours_of(self, coord: CoordType) -> list[CoordType]:
+        # flat-top directions
+        DIRECTIONS = [
+            (+1, 0), (+1, -1), (0, -1),
+            (-1, 0), (-1, +1), (0, +1)
+        ]
+        existing_coords = list(self.__result.keys())
+        neighbours = []
+        for dq, dr in DIRECTIONS:
+            new_coord = (coord[0] + dq, coord[1] + dr)
+            if new_coord in existing_coords:
+                neighbours.append(new_coord)
+        return neighbours
+
+    def _set_value_at(self, coord: CoordType, value: T) -> None:
+        self.__result[coord] = value
 
     @abstractmethod
     def name(self) -> str:
@@ -41,15 +72,17 @@ class BaseLayer(ABC):
         coords: list[CoordType],
         seed: int,
         radius: float,
-        layers: list["BaseLayer"]
+        layers: list[BaseLayer[Any]]
     ) -> None:
-        ready_layers = [x.name() for x in layers if x.ready]
-        missing = [dep for dep in self.depends_on() if dep not in ready_layers]
-        if missing:
-            raise ValueError(f"Missing dependent layers for {self.name()}: {missing}")
-        self.__result = self._generate(coords, seed, radius, layers)
+        self._generate(coords, seed, radius, layers)
         self.ready = True
-        return
+        # ready_layers = [x.name() for x in layers if x.ready]
+        # missing = [dep for dep in self.depends_on() if dep not in ready_layers]
+        # if missing:
+        #     raise ValueError(f"Missing dependent layers for {self.name()}: {missing}")
+        # self.__result = self._generate(coords, seed, radius, layers)
+        # self.ready = True
+        # return
 
     @abstractmethod
     def _generate(
@@ -57,6 +90,9 @@ class BaseLayer(ABC):
         coords: list[CoordType],
         seed: int,
         radius: float,
-        layers: list["BaseLayer"]
-    ) -> LayerMapType:
+        layers: list[BaseLayer[Any]]
+    ) -> None:
         raise NotImplementedError()
+
+
+AnyBaseLayerType: TypeAlias = BaseLayer[Any]

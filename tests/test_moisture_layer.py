@@ -7,15 +7,15 @@ def test_moisture_layer_deterministic():
     
     # generate height layer first (needed by moisture)
     height_layer = HeightLayer()
-    height_values = height_layer._generate(coords, seed=seed, radius=5, prev_layers={})
+    height_layer.generate(coords, seed=seed, radius=5, layers=[])
     
-    moisture_layer = MoistureLayer()
-    out1 = moisture_layer._generate(coords, seed=seed, radius=5, prev_layers={'height': height_values})
-    out2 = moisture_layer._generate(coords, seed=seed, radius=5, prev_layers={'height': height_values})
+    moisture_layer1 = MoistureLayer()
+    moisture_layer2 = MoistureLayer()
+    moisture_layer1.generate(coords, seed=seed, radius=5, layers=[height_layer])
+    moisture_layer2.generate(coords, seed=seed, radius=5, layers=[height_layer])
     
-    assert out1 == out2
+    for coord in coords:
+        assert moisture_layer1.get_value_at(coord) == moisture_layer2.get_value_at(coord)
     
-    expected_values = {coord: out1[coord] for coord in coords}
-
-    for coord, expected in expected_values.items():
-        assert abs(out2[coord] - expected) < 1e-6
+    assert all(c1 in moisture_layer2.get_all_coords() for c1 in moisture_layer1.get_all_coords())
+    assert all(c2 in moisture_layer1.get_all_coords() for c2 in moisture_layer2.get_all_coords())

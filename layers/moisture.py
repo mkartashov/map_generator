@@ -1,10 +1,10 @@
 # layers/moisture.py
-from core.base_layer import BaseLayer
-from core.types import CoordType, LayerMapFloatType
+from core.base_layer import BaseLayer, AnyBaseLayerType
+from core.types import CoordType
 from opensimplex import OpenSimplex
 
 
-class MoistureLayer(BaseLayer):
+class MoistureLayer(BaseLayer[float]):
     def name(self) -> str:
         return "moisture"
 
@@ -25,33 +25,29 @@ class MoistureLayer(BaseLayer):
         coords: list[CoordType],
         seed: int,
         radius: float,
-        layers: list[BaseLayer]
-    ) -> LayerMapFloatType:
+        layers: list[AnyBaseLayerType]
+    ) -> None:
         """
         Generate moisture values for each coordinate.
         Moisture is influenced by height: higher terrain tends to be drier.
         Returns a dict mapping (q,r) coordinates to float 0..1.
         """
-        height_layer_result = next(layer for layer in layers if layer.name() == "height").get_result()
-        max_value = max(height_layer_result.values())
+        height_layer = next(layer for layer in layers if layer.name() == "height")
+        _, max_value = height_layer.get_range()
 
         simplex = OpenSimplex(seed + self.seed_offset())
         freq = self.frequency() / radius
-        result: LayerMapFloatType = {}
 
         for coord in coords:
             # Height contribution normalized [0,1]
-            h = height_layer_result[coord] / max_value
+            h = height_layer.get_value_at(coord) / max_value
 
             # Noise contribution in [0,1]
             n = (simplex.noise2(coord[0] * freq, coord[1] * freq) + 1) / 2.0
 
             # Weighted blend: 70% noise, 30% height
-            moisture = 0.7 * n + 0.3 * h
+            moisture = float(0.7 * n + 0.3 * h)
 
             # Clamp to [0,1]
             moisture = min(max(moisture, 0.0), 1.0)
-
-            result[coord] = moisture
-
-        return result
+            self._set_value_at(coord, moisture)
