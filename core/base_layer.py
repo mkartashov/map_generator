@@ -14,6 +14,7 @@ class BaseLayer(ABC, Generic[T]):
         self.ready = False
 
     def get_range(self) -> tuple[T, T]:
+        """Returns real range of the data"""
         if not self.ready:
             raise RuntimeError("This layer is not ready: " + self.__class__.__name__)
         all_values = self.__result.values()
@@ -64,7 +65,7 @@ class BaseLayer(ABC, Generic[T]):
 
     @abstractmethod
     def max_layer_value(self) -> float:
-        """For scaling the actual values, for example, to meters for height"""
+        """Returns the theoretical maximum of this layer."""
         raise NotImplementedError()
 
     def generate(

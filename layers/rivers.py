@@ -17,7 +17,7 @@ class RiversLayer(BaseLayer[bool]):
         return "rivers"
 
     def depends_on(self) -> list[str]:
-        return ["height", "sea"]
+        return ["height", "sea", "lakes"]
 
     def frequency(self) -> float:
         """Probability of a wet high spot to make a river."""
@@ -67,6 +67,7 @@ class RiversLayer(BaseLayer[bool]):
         height_layer = next(layer for layer in layers if layer.name() == "height")
         moisture_layer = next(layer for layer in layers if layer.name() == "moisture")
         sea_layer = next(layer for layer in layers if layer.name() == "sea")
+        lakes_layer = next(layer for layer in layers if layer.name() == "lakes")
 
         source_candidates = self._select_river_source_candidates(
             coords,
@@ -104,7 +105,7 @@ class RiversLayer(BaseLayer[bool]):
                     return None
 
                 for n in neighbours:
-                    if sea_layer.get_value_at(n):
+                    if sea_layer.get_value_at(n) or lakes_layer.get_value_at(n):
                         return path_set | {n}
 
                 for n in neighbours:

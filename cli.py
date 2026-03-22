@@ -2,7 +2,9 @@
 import argparse
 from core.grid import generate_all_coordinates
 from engine.runner import run_layers
+from engine.game_engine import export_game_map
 from renderer.hex_renderer import render_layer
+
 
 
 def parse_arguments():
@@ -40,6 +42,11 @@ def main():
     for layer in layers:
         print(f"Rendering {layer.name()} layer...")
         render_layer(layer)
+        min_val, max_val = layer.get_range()
+        print(f"{layer.name()}: min/max: {min_val}/{max_val}")
+
+    print("Exporting game map...")
+    export_game_map(layers, seed=seed)
 
     print("Done!")
 
