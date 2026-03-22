@@ -11,10 +11,10 @@ from core.config import (
     DEEP_IRON_BASELINE_PROBABILITY,
     DEEP_IRON_PEAK_PROBABILITY,
     DEEP_IRON_ORE_GRADE_MEDIAN,
-    DEEP_IRON_ORE_GRADE_VARIABILITY,
+    DEEP_IRON_ORE_GRADE_SIGMA,
     DEEP_IRON_ORE_GRADE_EXTRA_RICH_PROBABILITY,
     DEEP_IRON_ORE_GRADE_EXTRA_RICH_MEDIAN,
-    DEEP_IRON_ORE_GRADE_EXTRA_RICH_VARIABILITY,
+    DEEP_IRON_ORE_GRADE_EXTRA_RICH_SIGMA,
 )
 
 
@@ -74,12 +74,12 @@ class DeepIronLayer(BaseLayer[float]):
             if random.random() < prob:
                 ore_grade = random.gauss(
                     DEEP_IRON_ORE_GRADE_MEDIAN,
-                    DEEP_IRON_ORE_GRADE_VARIABILITY
+                    DEEP_IRON_ORE_GRADE_SIGMA
                 )
                 if random.random() < DEEP_IRON_ORE_GRADE_EXTRA_RICH_PROBABILITY:
                     ore_grade = random.gauss(
                         DEEP_IRON_ORE_GRADE_EXTRA_RICH_MEDIAN,
-                        DEEP_IRON_ORE_GRADE_EXTRA_RICH_VARIABILITY
+                        DEEP_IRON_ORE_GRADE_EXTRA_RICH_SIGMA
                     )
                     print("extra rich!!!!!")
                 ore_grade = max(min(ore_grade, 1.0), 0.0)
