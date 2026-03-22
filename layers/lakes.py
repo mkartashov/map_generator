@@ -4,15 +4,15 @@ from core.types import CoordType
 from core.config import SEA_LEVEL
 
 
-class SeaLayer(BaseLayer[bool]):
+class LakesLayer(BaseLayer[bool]):
     """
     Marks ocean hexes based on height map and sea level.
     """
     def name(self) -> str:
-        return "sea"
+        return "lakes"
 
     def depends_on(self) -> list[str]:
-        return ["height"]
+        return ["height", "sea"]
 
     def frequency(self) -> float:
         raise NotImplementedError()
@@ -34,23 +34,11 @@ class SeaLayer(BaseLayer[bool]):
         Generate sea map: True for ocean hexes, False for land.
         """
         height_layer = next(layer for layer in layers if layer.name() == "height")
-
-        queue = []
-        visited = set()
-        for coord in coords:
-            neighbours = height_layer.get_neighbours_of(coord)
-            # find all edges that classify as ocean
-            if len(neighbours) < 6 and height_layer.get_value_at(coord) <= SEA_LEVEL:
-                queue.append(coord)
+        sea_layer = next(layer for layer in layers if layer.name() == "sea")
 
         for coord in coords:
-            self._set_value_at(coord, False)
-
-        while queue:
-            current = queue.pop()
-
-            for n in height_layer.get_neighbours_of(current):
-                if n not in visited and height_layer.get_value_at(n) <= SEA_LEVEL:
-                    self._set_value_at(n, True)
-                    visited.add(n)
-                    queue.append(n)
+            is_lake = False
+            is_below_sea_level = height_layer.get_value_at(coord) <= SEA_LEVEL
+            is_sea = sea_layer.get_value_at(coord)
+            is_lake = is_below_sea_level and not is_sea
+            self._set_value_at(coord, is_lake)

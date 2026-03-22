@@ -1,6 +1,7 @@
 # layers/moisture.py
 from core.base_layer import BaseLayer, AnyBaseLayerType
 from core.types import CoordType
+from core.config import CLIMATE_SCALE, CLIMATE_BIAS
 from opensimplex import OpenSimplex
 
 
@@ -18,7 +19,7 @@ class MoistureLayer(BaseLayer[float]):
         return 1234  # different offset to produce independent noise
 
     def max_layer_value(self) -> float:
-        return 100  # normalized 0..1 for moisture
+        return 1.0
 
     def _generate(
         self,
@@ -46,8 +47,9 @@ class MoistureLayer(BaseLayer[float]):
             n = (simplex.noise2(coord[0] * freq, coord[1] * freq) + 1) / 2.0
 
             # Weighted blend: 70% noise, 30% height
-            moisture = float(0.7 * n + 0.3 * h)
+            base = float(0.7 * n + 0.3 * h)
+            moisture = base * CLIMATE_SCALE + CLIMATE_BIAS
 
-            # Clamp to [0,1]
-            moisture = min(max(moisture, 0.0), 1.0)
+            # Clamp to [0,max moisture]
+            moisture = min(max(moisture, 0.0), self.max_layer_value())
             self._set_value_at(coord, moisture)

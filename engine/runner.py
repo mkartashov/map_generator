@@ -5,6 +5,8 @@ from layers.height import HeightLayer
 from layers.moisture import MoistureLayer
 from layers.sea import SeaLayer
 from layers.rivers import RiversLayer
+from layers.deep_iron import DeepIronLayer
+from layers.lakes import LakesLayer
 
 
 def get_layer_sequence() -> list[AnyBaseLayerType]:
@@ -12,7 +14,7 @@ def get_layer_sequence() -> list[AnyBaseLayerType]:
     Hardcoded topological order for now.
     Later replace with actual topo sort based on depends_on().
     """
-    return [HeightLayer(), MoistureLayer(), SeaLayer(), RiversLayer()]
+    return [HeightLayer(), MoistureLayer(), SeaLayer(), LakesLayer(), DeepIronLayer(), RiversLayer()]
 
 
 def run_layers(coords: list[CoordType], radius: float, seed: int) -> list[AnyBaseLayerType]:
@@ -24,5 +26,10 @@ def run_layers(coords: list[CoordType], radius: float, seed: int) -> list[AnyBas
 
     for layer in layers:
         layer.generate(coords, seed, radius, layers)
+
+    # validity check - check that each layer produces the same coords
+    for layer in layers:
+        assert set(layer.get_all_coords()) == set(coords)
+    print("Coords are identical")
 
     return layers

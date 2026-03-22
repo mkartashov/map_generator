@@ -1,6 +1,7 @@
 # layers/height.py
 from core.base_layer import BaseLayer, AnyBaseLayerType
 from core.types import CoordType
+from core.config import MAXIMUM_HEIGHT
 from opensimplex import OpenSimplex
 
 
@@ -12,13 +13,13 @@ class HeightLayer(BaseLayer[float]):
         return []
 
     def frequency(self) -> float:
-        return 5
+        return 4
 
     def seed_offset(self) -> int:
         return 0
 
     def max_layer_value(self) -> float:
-        return 1000.0  # meters
+        return MAXIMUM_HEIGHT
 
     def _generate(
         self,
