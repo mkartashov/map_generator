@@ -16,7 +16,6 @@ from core.config import (
     DEEP_IRON_ORE_GRADE_EXTRA_RICH_MEDIAN,
     DEEP_IRON_ORE_GRADE_EXTRA_RICH_VARIABILITY,
 )
-from opensimplex import OpenSimplex
 
 
 class DeepIronLayer(BaseLayer[float]):
@@ -24,10 +23,10 @@ class DeepIronLayer(BaseLayer[float]):
         return "deep_iron"
 
     def depends_on(self) -> list[str]:
-        return ["height", "sea"]  
+        return ["height", "sea"]
 
     def frequency(self) -> float:
-        raise NotImplementedError()  
+        raise NotImplementedError()
 
     def seed_offset(self) -> int:
         return 100
@@ -44,9 +43,9 @@ class DeepIronLayer(BaseLayer[float]):
     ) -> None:
         """
         Generate iron potential values for each coordinate.
-        This will modulate the probability and the amount of iron 
+        This will modulate the probability and the amount of iron
         that will appear in the tile. The modulator potential offers
-        realistic clustering, without revealing the whole map 
+        realistic clustering, without revealing the whole map
         by just one discovery.
         """
         random.seed(seed + self.seed_offset())
@@ -72,30 +71,24 @@ class DeepIronLayer(BaseLayer[float]):
                 )
             )
 
-
             if random.random() < prob:
                 ore_grade = random.gauss(
-                    DEEP_IRON_ORE_GRADE_MEDIAN, 
+                    DEEP_IRON_ORE_GRADE_MEDIAN,
                     DEEP_IRON_ORE_GRADE_VARIABILITY
                 )
                 if random.random() < DEEP_IRON_ORE_GRADE_EXTRA_RICH_PROBABILITY:
                     ore_grade = random.gauss(
-                        DEEP_IRON_ORE_GRADE_EXTRA_RICH_MEDIAN, 
+                        DEEP_IRON_ORE_GRADE_EXTRA_RICH_MEDIAN,
                         DEEP_IRON_ORE_GRADE_EXTRA_RICH_VARIABILITY
                     )
                     print("extra rich!!!!!")
                 ore_grade = max(min(ore_grade, 1.0), 0.0)
                 mining_yield = (
-                    ore_grade + # base
-                    0.2 * ore_grade**3 + # smoothing
-                    0.1 * exp(5*(ore_grade-0.75)) # reward high yield
-                    - 0.05 * exp(-40 * (ore_grade - 0.125)**2) # punish low yield
+                    ore_grade +  # base
+                    0.2 * ore_grade**3 +  # smoothing
+                    0.1 * exp(5*(ore_grade-0.75))  # reward high yield
+                    - 0.05 * exp(-40 * (ore_grade - 0.125)**2)  # punish low yield
                 )
-                print( int(100*ore_grade) / 100.0, int(100*mining_yield)/100.0)
+                print(int(100*ore_grade) / 100.0, int(100*mining_yield)/100.0)
 
                 self._set_value_at(coord, ore_grade)
-
-
-
-
-
