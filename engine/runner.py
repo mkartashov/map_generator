@@ -8,6 +8,7 @@ from layers.rivers import RiversLayer
 from layers.deep_iron import DeepIronLayer
 from layers.lakes import LakesLayer
 from layers.shallow_iron import ShallowIronLayer
+from layers.temperature import TemperatureLayer
 
 
 def get_layer_sequence() -> list[AnyBaseLayerType]:
@@ -17,6 +18,7 @@ def get_layer_sequence() -> list[AnyBaseLayerType]:
     """
     return [
         HeightLayer(),
+        TemperatureLayer(),
         MoistureLayer(),
         SeaLayer(),
         LakesLayer(),

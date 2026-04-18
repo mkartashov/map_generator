@@ -1,10 +1,17 @@
 SEA_LEVEL = 300.0  # meters
+LATITUDE = 50  # in degrees, from equator
 MAXIMUM_HEIGHT = 1500.0
 LOWLANDS_PEAK = 200.0
 HILLS_PEAK = 600.0
+TEMPERATURE_LAPSE_RATE = 4.5 / 1000.0  # C per meters
+TEMPERATURE_NOISE_AMPLITUDE = 2.0
+TEMPERATURE_EQUATOR = 35
+TEMPERATURE_POLE = -10
 
-CLIMATE_BIAS = 0.2  # positive => wetter; negative => dryer
-CLIMATE_SCALE = 1.2  # >1 - stronger extremes, more variery; <1 = more samey
+
+
+CLIMATE_BIAS = 0.1  # positive => wetter; negative => dryer
+CLIMATE_SCALE = 0.92  # >1 - stronger extremes, more variery; <1 = more samey
 
 # where the probability for deep iron deposit is highest (high hills / low mountains)
 DEEP_IRON_MOST_PROBABLE_ELEVATION = 500.0
