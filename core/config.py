@@ -9,7 +9,6 @@ TEMPERATURE_EQUATOR = 35
 TEMPERATURE_POLE = -10
 
 
-
 CLIMATE_BIAS = 0.1  # positive => wetter; negative => dryer
 CLIMATE_SCALE = 0.92  # >1 - stronger extremes, more variery; <1 = more samey
 

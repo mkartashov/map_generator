@@ -3,8 +3,8 @@ from core.base_layer import BaseLayer, AnyBaseLayerType
 from core.types import CoordType
 from core.config import (
     LATITUDE,
-    MAXIMUM_HEIGHT, 
-    TEMPERATURE_LAPSE_RATE, 
+    MAXIMUM_HEIGHT,
+    TEMPERATURE_LAPSE_RATE,
     TEMPERATURE_NOISE_AMPLITUDE,
     TEMPERATURE_EQUATOR,
     TEMPERATURE_POLE,
@@ -31,12 +31,18 @@ class TemperatureLayer(BaseLayer[float]):
     def _temp_at_latitude(self, latitude: float) -> float:
         lat = math.radians(latitude)
         return (
-            TEMPERATURE_EQUATOR - 
+            TEMPERATURE_EQUATOR -
             (TEMPERATURE_EQUATOR - TEMPERATURE_POLE) * (math.sin(lat) ** 2)
         )
 
-    def _generate(self, coords, seed, radius, layers):
-        height_layer = next(l for l in layers if l.name() == "height")
+    def _generate(
+        self,
+        coords: list[CoordType],
+        seed: int,
+        radius: float,
+        layers: list[AnyBaseLayerType]
+    ) -> None:
+        height_layer = next(layer for layer in layers if layer.name() == "height")
         max_height = height_layer.max_layer_value()
 
         simplex = OpenSimplex(seed + self.seed_offset())
